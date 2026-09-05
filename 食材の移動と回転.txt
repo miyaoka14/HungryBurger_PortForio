@@ -1,0 +1,195 @@
+using UnityEngine;
+
+public class Move3D : MonoBehaviour
+
+{
+
+    [SerializeField] Rigidbody rigidBody;
+
+    float objPosZ;
+    //この辺のやつは移動制限
+    public float minX = -10f;
+
+    public float maxX = 10f;
+
+    public float minZ = -10f;
+
+    public float maxZ = 10f;
+
+    public float minY = -10f;
+
+    public float maxY = 10f;
+
+    //回転速度
+    public float rotateSpeed = 10f;
+    //ホイールのやつ
+    public float wheelmove = 1f;
+    //押されてるかとかの判定とか
+    public static bool isMouseDown = false;
+    //topバンズか
+    public bool IsTopBuns = false;
+    
+    private bool hasSpawnedNext = false;
+
+    private bool wasReleased = false;
+
+    private void Start()
+
+    {
+
+        objPosZ = Camera.main.WorldToScreenPoint(transform.position).z;
+
+    }
+
+    //つかんだら重力と勝手に動かんように
+    public void OnMouseDown()
+
+    {
+
+        rigidBody.useGravity = false;
+
+        rigidBody.constraints =
+
+            RigidbodyConstraints.FreezeRotation;
+
+        isMouseDown = true;
+
+    }
+
+    public void OnMouseUp()
+
+    {
+
+        rigidBody.useGravity = true;
+
+        rigidBody.constraints =
+
+            RigidbodyConstraints.None;
+
+        isMouseDown = false;
+
+        wasReleased = true;
+
+    }
+
+    // ホイールで動く場所
+    private void OnMouseDrag()
+
+    {
+        if (Input.GetMouseButton(1))
+        {
+            // マウスの移動量を取得
+            float rotateX = Input.GetAxis("Mouse X") * rotateSpeed;
+            float rotateY = Input.GetAxis("Mouse Y") * rotateSpeed;
+
+            // カメラの向きに合わせて回転させる
+            transform.Rotate(Camera.main.transform.up, -rotateX, Space.World);
+            transform.Rotate(Camera.main.transform.right, rotateY, Space.World);
+
+            return;
+        }
+
+        // ホイールをどれだけ回したか
+        float wheelValue = 
+            
+            Input.GetAxis("Mouse ScrollWheel");
+
+        if (wheelValue != 0)
+
+        {
+
+            objPosZ += wheelValue * wheelmove;
+
+        }
+
+        // マウスの位置に合わせてオブジェクトを動かす
+        Vector3 mousePos = new Vector3(
+
+            Input.mousePosition.x,
+
+            Input.mousePosition.y,
+
+            objPosZ
+
+        );
+
+        transform.position =
+
+            Camera.main.ScreenToWorldPoint(mousePos);
+
+    }
+
+    //移動制限
+    private void Update()
+
+    {
+
+        float clampedX =
+
+            Mathf.Clamp(transform.position.x, minX, maxX);
+
+        float clampedY =
+
+            Mathf.Clamp(transform.position.y, minY, maxY);
+
+        float clampedZ =
+
+            Mathf.Clamp(transform.position.z, minZ, maxZ);
+
+        transform.position =
+
+            new Vector3(clampedX, clampedY, clampedZ);
+
+    }
+
+    private void OnCollisionEnter(Collision collision)
+
+    {
+
+        if (!wasReleased)
+
+        {
+
+            return;
+
+        }
+
+        if (hasSpawnedNext)
+
+        {
+
+            return;
+
+        }
+
+        hasSpawnedNext = true;
+
+        FoodProb foodProb =
+
+            FindFirstObjectByType<FoodProb>();
+
+        if (foodProb == null)
+
+        {
+
+            return;
+
+        }
+
+        //上バンズなら完成ボタン表示
+
+        if (IsTopBuns)
+
+        {
+
+            foodProb.CompleteButton.SetActive(true);
+
+            return;
+
+        }
+
+        foodProb.SpawnRandomObject();
+
+    }
+
+}

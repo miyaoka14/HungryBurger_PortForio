@@ -1,0 +1,98 @@
+using UnityEditor.PackageManager;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+public class CursorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    [SerializeField] private Texture2D _normalCursor;
+    [SerializeField] private Texture2D _grabCursor;
+    [SerializeField] private Texture2D _hoverCursor;
+
+    enum MouseCursorMode
+    {
+        Normal,
+        Grab,
+        Hover,
+    }
+
+    MouseCursorMode _cursorMode = MouseCursorMode.Normal;
+
+    [SerializeField] private Vector2 hotspot = Vector2.zero;
+
+    // マウスがボタンに重なっているかどうか
+    private bool _isMouseOverButton = false;
+
+    void Update()
+    {
+        
+        if (Input.GetMouseButtonDown(0))
+        {
+            _cursorMode = MouseCursorMode.Grab;
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            if (_isMouseOverButton)
+            {
+                _cursorMode = MouseCursorMode.Hover;
+            }
+            else
+            {
+                _cursorMode = MouseCursorMode.Normal;
+            }
+        }
+
+        switch (_cursorMode)
+        {
+            case MouseCursorMode.Normal:
+                SetNormalCursor();
+                break;
+            case MouseCursorMode.Grab:
+                SetGrabCursor();
+                break;
+            case MouseCursorMode.Hover:
+                SetHoverCursor();
+                break;
+        }
+    }
+
+    // ボタンにマウスが重なったときに呼ばれる
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _isMouseOverButton = true;
+
+        if (!Input.GetMouseButton(0))
+        {
+            _cursorMode = MouseCursorMode.Hover;
+        }
+    }
+
+    // ボタンからマウスが離れたときに呼ばれる
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isMouseOverButton = false;
+        _cursorMode = MouseCursorMode.Normal;
+    }
+
+
+
+
+    // 通常状態にする
+    public void SetNormalCursor()
+    {
+        Cursor.SetCursor(_normalCursor, hotspot, CursorMode.Auto);
+    }
+
+    // 掴み状態にする
+    public void SetGrabCursor()
+    {
+        Cursor.SetCursor(_grabCursor, hotspot, CursorMode.Auto);
+        
+    }
+
+    // UIホバー状態にする
+    public void SetHoverCursor()
+    {
+        Cursor.SetCursor(_hoverCursor, hotspot, CursorMode.Auto);
+    }
+}
